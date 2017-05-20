@@ -44,8 +44,9 @@ function selectIndex {
     echo -n "ENTER GRID INDEX: "
     read selected_index
     if [[ $selected_index =~ ^-?[0-9]+$ ]]; then # check if integer
-	if [ $selected_index -ge $(( $grid_size ^ 2)) ]; then
-            echo "MAXIMUM VALUE IS "$(( $grid_size ^ 2 - 1))
+        local max_value=$(($grid_size * $grid_size - 1))
+	if [ $selected_index -gt $max_value ]; then
+            echo "MAXIMUM INDEX IS "$max_value
             selectIndex
         fi
     else 
@@ -73,6 +74,10 @@ while ! $is_exit_requested; do
         
         echo -e "\nTURN OF PLAYER $active_player"
         selectIndex
+        
+        tmp_val=$((selected_index/grid_size))
+        row=${tmp_val%.*}
+        col=$((selected_index%grid_size))
 
         (( active_player = active_player==1 ? 2 : 1 ))
     done
