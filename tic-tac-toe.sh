@@ -35,7 +35,7 @@ function printBoard {
 	    local index=$((r * grid_size + c))
             echo -n "${grid_flags[$index]} "
         done
-    echo
+    echo 
     done
 }
 
@@ -45,7 +45,10 @@ function selectIndex {
     if [[ $selected_index =~ ^-?[0-9]+$ ]]; then # check if integer
         local max_value=$(($grid_size * $grid_size - 1))
 	if [ $selected_index -gt $max_value ]; then
-            echo "MAXIMUM INDEX IS "$max_value
+            echo -e "MAXIMUM INDEX IS "$max_value"\n"
+            selectIndex
+        elif [ ${grid_flags[$selected_index]} -ne 0 ]; then  
+            echo -e "SLOT IS ALREADY TAKEN \n" 
             selectIndex
         fi
     else 
@@ -71,11 +74,10 @@ while ! $is_exit_requested; do
     clear
 
     while ! $is_set_finished; do
-        #clear        
-
+        clear        
         printBoard
         
-        echo -e "\nTURN OF PLAYER $active_player"
+        echo -e "\nTURN OF PLAYER $active_player\n"
         selectIndex
         
         grid_flags[$selected_index]=$active_player
