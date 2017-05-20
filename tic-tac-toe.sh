@@ -3,8 +3,6 @@
 clear
 
 # get grid size from user
-grid_size=1
-
 while [ -z $grid_size ] || [ $grid_size -lt 3 ] || [ $grid_size -gt 8 ]; do
     echo -n "ENTER GRID SIZE [3-8]: "
     read grid_size
@@ -25,18 +23,17 @@ is_exit_requested=false
 is_set_finished=false
 active_player=1 # player who gets the turn
 
-declare -a grid_flags
-for (( i=0; i<$grid_size; i++ )) do
-    for (( j=0; j<$grid_size; j++ )) do
-        grid_flags[$i,$j]=0
-    done
+grid_flags=()
+for (( i=0; i<$((grid_size*grid_size)); i++ )) do
+    grid_flags[$i]=0
 done
 
 # set up helper functions
 function printBoard {
-    for (( i=0; i<$grid_size; i++ )) do
-        for (( j=0; j<$grid_size; j++ )) do
-            echo -n "${grid_flags[$i,$j]} "
+    for (( r=0; r<$grid_size; r++ )) do
+        for (( c=0; c<$grid_size; c++ )) do
+	    local index=$((r * grid_size + c))
+            echo -n "${grid_flags[$index]} "
         done
     echo
     done
@@ -74,16 +71,14 @@ while ! $is_exit_requested; do
     clear
 
     while ! $is_set_finished; do
-        clear        
+        #clear        
 
         printBoard
         
         echo -e "\nTURN OF PLAYER $active_player"
         selectIndex
         
-        tmp_val=$((selected_index/grid_size))
-        row=${tmp_val%.*}
-        col=$((selected_index%grid_size))
+        grid_flags[$selected_index]=$active_player
 
         (( active_player = active_player==1 ? 2 : 1 ))
     done
