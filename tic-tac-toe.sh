@@ -1,5 +1,7 @@
 #!/bin/bash
 
+clear
+
 # get grid size from user
 grid_size=1
 
@@ -69,7 +71,11 @@ function askToContinue {
 # start game loop
 while ! $is_exit_requested; do
 
+    clear
+
     while ! $is_set_finished; do
+        clear        
+
         printBoard
         
         echo -e "\nTURN OF PLAYER $active_player"
