@@ -15,7 +15,9 @@ while [ -z $grid_size ] || [ $grid_size -lt 3 ] || [ $grid_size -gt 8 ]; do
 done
 
 # set up starting values
-declare -a final_score
+last_index=$(($grid_size * $grid_size - 1))
+
+final_score=()
 final_score[1]=0 # score of player 1
 final_score[2]=0 # score of player 2
 
@@ -31,8 +33,6 @@ done
 # set up helper functions
 function printBoard {
     for (( r=0; r<$grid_size; r++ )) do
-        echo -ne "\t\t\t"
-
         for (( c=0; c<$grid_size; c++ )) do
 	        local index=$((r * grid_size + c))
             local flag=${grid_flags[$index]}
@@ -40,10 +40,16 @@ function printBoard {
 
             if [ $flag -eq 1 ]; then
                 char=" X "
+                if [ $c -lt $(( grid_size - 1 )) ]; then char=" "$char; fi
             elif [ $flag -eq 2 ]; then
                 char=" O "
+                if [ $c -lt $(( grid_size - 1 )) ]; then char=" "$char; fi
             else
-                char="[$index]"
+                if [ $last_index -lt 10 ]; then
+                    char="[$index]"
+                else
+                    char=$( printf "[%02d]" $index )
+                fi
             fi
 
             echo -n "  $char"
@@ -54,7 +60,15 @@ function printBoard {
         done
 
         if [ $r -lt $(( grid_size - 1 )) ]; then
-            echo -e "\n\t\t\t-----------------------"
+            echo
+            for (( s=0; s<$grid_size; s++ )) do
+                if [ $last_index -lt 10 ]; then
+                    echo -n "--------"
+                else
+                    echo -n "---------"
+                fi
+            done
+            echo
         fi
     done
 
@@ -65,9 +79,8 @@ function selectIndex {
     echo -n "CHOOSE GRID INDEX: "
     read selected_index
     if [[ $selected_index =~ ^-?[0-9]+$ ]]; then # check if integer
-        local max_value=$(($grid_size * $grid_size - 1))
-	if [ $selected_index -gt $max_value ]; then
-            echo -e "MAXIMUM INDEX IS "$max_value"!\n"
+	    if [ $selected_index -gt $last_index ]; then
+            echo -e "MAXIMUM INDEX IS "$last_index"!\n"
             selectIndex
         elif [ ${grid_flags[$selected_index]} -ne 0 ]; then
             echo -e "SLOT IS ALREADY TAKEN \n"
