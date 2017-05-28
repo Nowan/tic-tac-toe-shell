@@ -3,6 +3,7 @@
 clear
 
 # get grid size from user
+grid_size=3
 while [[ -z $grid_size || !$grid_size =~ ^-?[0-9]+$ || $grid_size -lt 3 || $grid_size -gt 8 ]]; do
     echo -n "ENTER GRID SIZE [3-8]: "
     read grid_size
@@ -30,11 +31,14 @@ is_set_finished=false
 active_player=1 # player who gets the turn
 
 grid_flags=()
-for (( i=0; i<$((grid_size*grid_size)); i++ )) do
-    grid_flags[$i]=0
-done
 
 # set up helper functions
+function initGrid {
+    for (( i=0; i<$((grid_size*grid_size)); i++ )) do
+        grid_flags[$i]=0
+    done
+}
+
 function printBoard {
     for (( r=0; r<$grid_size; r++ )) do
         for (( c=0; c<$grid_size; c++ )) do
@@ -44,10 +48,10 @@ function printBoard {
 
             if [ $flag -eq 1 ]; then
                 char=" X "
-                if [ $c -lt $(( grid_size - 1 )) ]; then char=" "$char; fi
+                if [ $last_index -ge 10 ]; then char=" "$char; fi
             elif [ $flag -eq 2 ]; then
                 char=" O "
-                if [ $c -lt $(( grid_size - 1 )) ]; then char=" "$char; fi
+                if [ $last_index -ge 10 ]; then char=" "$char; fi
             else
                 if [ $last_index -lt 10 ]; then
                     char="[$index]"
@@ -57,20 +61,13 @@ function printBoard {
             fi
 
             echo -n "  $char"
-
-            if [ $c -lt $(( grid_size - 1 )) ]; then
-                echo -n "  |"
-            fi
+            if [ $c -lt $(( grid_size - 1 )) ]; then echo -n "  |"; fi
         done
 
         if [ $r -lt $(( grid_size - 1 )) ]; then
             echo
             for (( s=0; s<$grid_size; s++ )) do
-                if [ $last_index -lt 10 ]; then
-                    echo -n "--------"
-                else
-                    echo -n "---------"
-                fi
+                if [ $last_index -lt 10 ]; then echo -n "--------"; else echo -n "---------"; fi
             done
             echo
         fi
@@ -97,30 +94,36 @@ function selectIndex {
 }
 
 function askToContinue {
-    echo -n "DO YOU WANT TO PLAY ANOTHER SET? [Y/n] "
+    echo -ne "\nDO YOU WANT TO PLAY ANOTHER SET? [Y/n] "
     read continue_playing
     continue_playing=$(echo $continue_playing | tr '[:upper:]' '[:lower:]')
     case "$continue_playing" in
-        "y") is_exit_requested=false ;;
+        "y") is_set_finished=false ;;
         "n") is_exit_requested=true ;;
-        *) echo -e "\nINVALID ANSWER. PRINT 'Y/y' or 'N/n'"; askToContinue
+        *) echo "Invalid answer. Please type 'Y/y' or 'N/n'"; askToContinue
     esac
 }
 
 function validateVictory {
 	local flag_count=0
+    local result=-1
 	for (( i=0; i<$((grid_size*grid_size)); i++ )) do
 	    if [ ${grid_flags[$i]} -ne 0 ]; then
-            flag_count=$(( flag_count + 1 ))
+            (( flag_count=flag_count+1 ))
 	    fi
     done
-    echo "FLAG COUNT: "$flag_count
+
+    if [[ $flag_count -eq $(( last_index+1 )) ]]; then
+        result=0
+    fi
+
+    echo $result
 }
 
 # start game loop
 while ! $is_exit_requested; do
-
     clear
+    initGrid
 
     while ! $is_set_finished; do
         clear
@@ -133,10 +136,27 @@ while ! $is_exit_requested; do
 
         grid_flags[$selected_index]=$active_player
 
-        validateVictory
+        result=$(validateVictory)
 
-        (( active_player = active_player==1 ? 2 : 1 ))
+        if [[ $result -ge 0 ]]; then
+            is_set_finished=true
+        else
+            (( active_player = active_player==1 ? 2 : 1 ))
+        fi
     done
+
+    clear
+
+    if [[ $result -eq 0 ]]; then
+        printf "\nIT'S A DRAW! FINAL SCORE IS %s : %s\n\n" ${final_score[1]} ${final_score[2]}
+    else
+        (( final_score[result]=final_score[result]+1 ))
+        printf "\nPLAYER $result HAVE WON! FINAL SCORE IS %s : %s\n\n" ${final_score[1]} ${final_score[2]}
+    fi
+
+    printBoard
 
     askToContinue
 done
+
+clear
