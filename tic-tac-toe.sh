@@ -3,14 +3,18 @@
 clear
 
 # get grid size from user
-while [ -z $grid_size ] || [ $grid_size -lt 3 ] || [ $grid_size -gt 8 ]; do
+while [[ -z $grid_size || !$grid_size =~ ^-?[0-9]+$ || $grid_size -lt 3 || $grid_size -gt 8 ]]; do
     echo -n "ENTER GRID SIZE [3-8]: "
     read grid_size
 
-    if [ $grid_size -lt 3 ]; then
-    	echo "Size must be greater than 2!"
-    elif [ $grid_size -gt 8 ]; then
-        echo "Size must be lesser than 9!"
+    if [[ $grid_size =~ ^-?[0-9]+$ ]]; then # check if integer
+        if [ $grid_size -lt 3 ]; then
+            echo -e "Size must be greater than 2!\n"
+        elif [ $grid_size -gt 8 ]; then
+            echo -e "Size must be lesser than 9!\n"
+        fi
+    else
+        echo -e "Enter valid number!\n"
     fi
 done
 
