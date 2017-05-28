@@ -32,10 +32,19 @@ done
 function printBoard {
     for (( r=0; r<$grid_size; r++ )) do
         for (( c=0; c<$grid_size; c++ )) do
-	    local index=$((r * grid_size + c))
-            echo -n "${grid_flags[$index]} "
+	        local index=$((r * grid_size + c))
+            local flag=${grid_flags[$index]}
+            local char="_"
+
+            if [ $flag -eq 1 ]; then
+                char="X"
+            elif [ $flag -eq 2 ]; then
+                char="O"
+            fi
+
+            echo -n "$char "
         done
-    echo 
+    echo
     done
 }
 
@@ -47,11 +56,11 @@ function selectIndex {
 	if [ $selected_index -gt $max_value ]; then
             echo -e "MAXIMUM INDEX IS "$max_value"\n"
             selectIndex
-        elif [ ${grid_flags[$selected_index]} -ne 0 ]; then  
-            echo -e "SLOT IS ALREADY TAKEN \n" 
+        elif [ ${grid_flags[$selected_index]} -ne 0 ]; then
+            echo -e "SLOT IS ALREADY TAKEN \n"
             selectIndex
         fi
-    else 
+    else
         echo -e "YOU MUST PROVIDE A NUMBER! \n"
         selectIndex
     fi
@@ -68,23 +77,34 @@ function askToContinue {
     esac
 }
 
+function validateVictory {
+	local flag_count=0
+	for (( i=0; i<$((grid_size*grid_size)); i++ )) do
+	    if [ ${grid_flags[$i]} -ne 0 ]; then
+            flag_count=$(( flag_count + 1 ))
+	    fi
+    done
+    echo "FLAG COUNT: "$flag_count
+}
+
 # start game loop
 while ! $is_exit_requested; do
 
     clear
 
     while ! $is_set_finished; do
-        clear        
+        clear
         printBoard
-        
+
         echo -e "\nTURN OF PLAYER $active_player\n"
         selectIndex
-        
+
         grid_flags[$selected_index]=$active_player
+
+        validateVictory
 
         (( active_player = active_player==1 ? 2 : 1 ))
     done
 
     askToContinue
 done
-
