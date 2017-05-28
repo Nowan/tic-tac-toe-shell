@@ -31,30 +31,43 @@ done
 # set up helper functions
 function printBoard {
     for (( r=0; r<$grid_size; r++ )) do
+        echo -ne "\t\t\t"
+
         for (( c=0; c<$grid_size; c++ )) do
 	        local index=$((r * grid_size + c))
             local flag=${grid_flags[$index]}
-            local char="_"
+            local char="?"
 
             if [ $flag -eq 1 ]; then
-                char="X"
+                char=" X "
             elif [ $flag -eq 2 ]; then
-                char="O"
+                char=" O "
+            else
+                char="[$index]"
             fi
 
-            echo -n "$char "
+            echo -n "  $char"
+
+            if [ $c -lt $(( grid_size - 1 )) ]; then
+                echo -n "  |"
+            fi
         done
-    echo
+
+        if [ $r -lt $(( grid_size - 1 )) ]; then
+            echo -e "\n\t\t\t-----------------------"
+        fi
     done
+
+    echo
 }
 
 function selectIndex {
-    echo -n "ENTER GRID INDEX: "
+    echo -n "CHOOSE GRID INDEX: "
     read selected_index
     if [[ $selected_index =~ ^-?[0-9]+$ ]]; then # check if integer
         local max_value=$(($grid_size * $grid_size - 1))
 	if [ $selected_index -gt $max_value ]; then
-            echo -e "MAXIMUM INDEX IS "$max_value"\n"
+            echo -e "MAXIMUM INDEX IS "$max_value"!\n"
             selectIndex
         elif [ ${grid_flags[$selected_index]} -ne 0 ]; then
             echo -e "SLOT IS ALREADY TAKEN \n"
@@ -94,9 +107,11 @@ while ! $is_exit_requested; do
 
     while ! $is_set_finished; do
         clear
+
+        echo -e "\nTURN OF PLAYER $active_player:\n"
         printBoard
 
-        echo -e "\nTURN OF PLAYER $active_player\n"
+        echo
         selectIndex
 
         grid_flags[$selected_index]=$active_player
