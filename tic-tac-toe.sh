@@ -182,6 +182,25 @@ function validateVictory {
                     break_loop=true
                     break
                 else seq_length=0; step=0; fi
+
+                # check for counter-diagonal victories
+                if [[ ( $r -eq 0 || $c -eq $(( grid_size-1 )) ) || ${grid_flags[$(( current_index - grid_size + 1 ))]} -ne current_flag  ]]; then
+                    while [[ $(( r+step )) -lt $grid_size && $(( c-step )) -ge 0 ]]; do
+                        local index_on_step=$(( (r + step) * grid_size + c - step ))
+                        local flag_on_step=${grid_flags[$index_on_step]}
+
+                        if [[ $flag_on_step -eq current_flag ]]; then
+                            (( seq_length+=1 ))
+                            (( step+=1 ))
+                        else break; fi
+                    done
+                fi
+
+                if [[ $seq_length -ge $grid_size ]]; then
+                    result=$current_flag
+                    break_loop=true
+                    break
+                else seq_length=0; step=0; fi
             done
 
             if $break_loop; then break; fi
