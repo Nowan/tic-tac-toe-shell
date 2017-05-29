@@ -3,7 +3,7 @@
 clear
 
 # get grid size from user
-grid_size=3
+#grid_size=3
 while [[ -z $grid_size || !$grid_size =~ ^-?[0-9]+$ || $grid_size -lt 3 || $grid_size -gt 8 ]]; do
     echo -n "ENTER GRID SIZE [3-8]: "
     read grid_size
@@ -106,18 +106,58 @@ function askToContinue {
 
 function validateVictory {
 	local flag_count=0
-    local result=-1
+    result=-1
 	for (( i=0; i<$((grid_size*grid_size)); i++ )) do
 	    if [ ${grid_flags[$i]} -ne 0 ]; then
             (( flag_count=flag_count+1 ))
 	    fi
     done
 
-    if [[ $flag_count -eq $(( last_index+1 )) ]]; then
-        result=0
+    if [[ $flag_count -ge $(( grid_size * 2 - 1 )) ]]; then
+        local seq_length=0
+
+        for (( r=0; r<$grid_size; r++ )) do
+            local break_loop=false
+
+            for (( c=0; c<$grid_size; c++ )) do
+                local current_index=$(( r * grid_size + c ))
+                local current_flag=${grid_flags[$current_index]}
+                local step=0
+
+                if [[ $current_flag -eq 0 ]]; then continue; fi
+
+                # check for horisontal victories
+                if [[ $c -eq 0 || ${grid_flags[$(( current_index - 1 ))]} -ne current_flag  ]]; then
+                    while [[ $(( c+step )) -lt $(( (r+1)*grid_size ))  ]]; do
+                        local index_on_step=$(( r * grid_size + c + step ))
+                        local flag_on_step=${grid_flags[$index_on_step]}
+
+                        if [[ $flag_on_step -eq current_flag ]]; then
+                            (( seq_length+=1 ))
+                            (( step+=1 ))
+                        else break; fi
+                    done
+                fi
+
+                if [[ $seq_length -ge $grid_size ]]; then
+                    result=$current_flag
+                    break_loop=true
+                    break
+                fi
+
+                seq_length=0
+            done
+
+            if $break_loop; then break; fi
+        done
+
+        # check for a draw if winner wasn't chosen
+        if [[ $result -eq -1 && $flag_count -eq $(( last_index+1 )) ]]; then
+            result=0
+        fi
     fi
 
-    echo $result
+    eval "$1=$result"
 }
 
 # start game loop
@@ -136,7 +176,8 @@ while ! $is_exit_requested; do
 
         grid_flags[$selected_index]=$active_player
 
-        result=$(validateVictory)
+        result=-1
+        validateVictory result
 
         if [[ $result -ge 0 ]]; then
             is_set_finished=true
