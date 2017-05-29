@@ -113,7 +113,7 @@ function validateVictory {
 	    fi
     done
 
-    #if [[ $flag_count -ge $(( grid_size * 2 - 1 )) ]]; then
+    if [[ $flag_count -ge $(( grid_size * 2 - 1 )) ]]; then
         local seq_length=0
 
         for (( r=0; r<$grid_size; r++ )) do
@@ -163,6 +163,25 @@ function validateVictory {
                     break_loop=true
                     break
                 else seq_length=0; step=0; fi
+
+                # check for diagonal victories
+                if [[ ( $r -eq 0 || $c -eq 0 ) || ${grid_flags[$(( current_index - grid_size - 1 ))]} -ne current_flag  ]]; then
+                    while [[ $(( r+step )) -lt $grid_size && $(( c+step )) -lt $(( (r+1)*grid_size )) ]]; do
+                        local index_on_step=$(( (r + step) * grid_size + c + step ))
+                        local flag_on_step=${grid_flags[$index_on_step]}
+
+                        if [[ $flag_on_step -eq current_flag ]]; then
+                            (( seq_length+=1 ))
+                            (( step+=1 ))
+                        else break; fi
+                    done
+                fi
+
+                if [[ $seq_length -ge $grid_size ]]; then
+                    result=$current_flag
+                    break_loop=true
+                    break
+                else seq_length=0; step=0; fi
             done
 
             if $break_loop; then break; fi
@@ -172,7 +191,7 @@ function validateVictory {
         if [[ $result -eq -1 && $flag_count -eq $(( last_index+1 )) ]]; then
             result=0
         fi
-    #fi
+    fi
 
     eval "$1=$result"
 }
